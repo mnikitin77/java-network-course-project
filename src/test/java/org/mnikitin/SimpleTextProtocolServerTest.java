@@ -34,27 +34,24 @@ public class SimpleTextProtocolServerTest {
 
     @Test
     public void whenSend5hello_then2ok() throws InterruptedException {
-        var message = "5\nhello";
         sendMessageAndValidateResponse(
-                message,
+                "5\nhello",
                 (s) -> Assertions.assertThat(s).isEqualTo(OK_RESPONSE)
         );
     }
 
     @Test
     public void whenSend4cool_then2ok() throws InterruptedException {
-        var message = "4\ncool";
         sendMessageAndValidateResponse(
-                message,
+                "4\ncool",
                 (s) -> Assertions.assertThat(s).isEqualTo(OK_RESPONSE)
         );
     }
 
     @Test
     public void whenSend6haha_then3err() throws InterruptedException {
-        var message = "6\nhaha";
         sendMessageAndValidateResponse(
-                message,
+                "6\nhaha",
                 (s) -> Assertions.assertThat(s).isEqualTo(ERROR_RESPONSE)
         );
     }
