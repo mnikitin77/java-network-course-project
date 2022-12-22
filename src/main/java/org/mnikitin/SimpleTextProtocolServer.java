@@ -25,9 +25,9 @@ public class SimpleTextProtocolServer {
     private Channel channel;
 
     public static void main(String[] args) {
-        var port = args.length > 0 ?
-                Integer.parseInt(args[0]) :
-                Configuration.instance().port();
+        var port = args.length > 0
+                ? Integer.parseInt(args[0])
+                : Configuration.instance().port();
         new SimpleTextProtocolServer().start(port);
     }
 

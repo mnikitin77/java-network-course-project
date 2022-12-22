@@ -15,10 +15,10 @@ public class MessageValidator {
         var messageElements = message.split(DELIMITER);
         if (messageElements.length == 2 &&
                 checkMessage(messageElements[0], messageElements[1])) {
-            log.info("Message [{}] is valid", message);
+            log.info("Message\n[{}] is valid", message);
             return true;
         }
-        log.warn("Message [{}] is invalid", message);
+        log.warn("Message\n[{}] is invalid", message);
         return false;
     }
 
