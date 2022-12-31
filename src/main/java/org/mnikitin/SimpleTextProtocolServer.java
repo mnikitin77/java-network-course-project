@@ -11,7 +11,9 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
 import org.mnikitin.configuration.Configuration;
+import org.mnikitin.configuration.SslContextConfiguration;
 import org.mnikitin.handler.MessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,9 @@ import java.util.Objects;
 public class SimpleTextProtocolServer {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleTextProtocolServer.class);
+    private static final String KEYSTORE_PATH = "/ssl/serverkeystore.jks";
+    private static final String TRUSTSTORE_PATH = "/ssl/servertruststore.jks";
+    private static final String PASSWORD = "qwerty";
 
     private Channel channel;
 
@@ -42,8 +47,16 @@ public class SimpleTextProtocolServer {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        public void initChannel(SocketChannel ch) {
+                        public void initChannel(SocketChannel ch) throws Exception {
+
+                            var sslEngine = new SslContextConfiguration(
+                                    KEYSTORE_PATH, PASSWORD, TRUSTSTORE_PATH, PASSWORD
+                            ).getServerSslContext().newEngine(ch.alloc());
+                            sslEngine.setUseClientMode(false);
+                            sslEngine.setNeedClientAuth(true);
+
                             ch.pipeline().addLast(
+                                    new SslHandler(sslEngine),
                                     new StringDecoder(),
                                     new StringEncoder(),
                                     new MessageHandler()
@@ -56,7 +69,7 @@ public class SimpleTextProtocolServer {
             channel = b.bind(port).sync().channel();
             log.info("SimpleProtocolServer started on port {}.", port);
             channel.closeFuture().sync();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
             bossGroup.shutdownGracefully();
