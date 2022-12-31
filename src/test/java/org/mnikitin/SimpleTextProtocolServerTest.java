@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mnikitin.configuration.SslContextConfiguration;
 
 import java.util.function.Consumer;
 
@@ -20,6 +21,11 @@ public class SimpleTextProtocolServerTest {
     private static final String HOST = "127.0.0.1";
     private static final String OK_RESPONSE = "2\nok";
     private static final String ERROR_RESPONSE = "3\nerr";
+    private static final String KEYSTORE_PATH = "/ssl/clientkeystore.jks";
+    private static final String TRUSTSTORE_PATH = "/ssl/clienttruststore.jks";
+    private static final String PASSWORD = "qwerty";
+
+
     private static final SimpleTextProtocolServer server = new SimpleTextProtocolServer();
 
     @BeforeAll
@@ -33,7 +39,7 @@ public class SimpleTextProtocolServerTest {
     }
 
     @Test
-    public void whenSend5hello_then2ok() throws InterruptedException {
+    public void whenSend5hello_then2ok() throws Exception {
         sendMessageAndValidateResponse(
                 "5\nhello",
                 (s) -> Assertions.assertThat(s).isEqualTo(OK_RESPONSE)
@@ -41,7 +47,7 @@ public class SimpleTextProtocolServerTest {
     }
 
     @Test
-    public void whenSend4cool_then2ok() throws InterruptedException {
+    public void whenSend4cool_then2ok() throws Exception {
         sendMessageAndValidateResponse(
                 "4\ncool",
                 (s) -> Assertions.assertThat(s).isEqualTo(OK_RESPONSE)
@@ -49,7 +55,7 @@ public class SimpleTextProtocolServerTest {
     }
 
     @Test
-    public void whenSend6haha_then3err() throws InterruptedException {
+    public void whenSend6haha_then3err() throws Exception {
         sendMessageAndValidateResponse(
                 "6\nhaha",
                 (s) -> Assertions.assertThat(s).isEqualTo(ERROR_RESPONSE)
@@ -59,7 +65,11 @@ public class SimpleTextProtocolServerTest {
     private void sendMessageAndValidateResponse(
             String message,
             Consumer<String> responseProcessor
-    ) throws InterruptedException {
+    ) throws Exception {
+
+        var sslCtx = new SslContextConfiguration(
+                KEYSTORE_PATH, PASSWORD, TRUSTSTORE_PATH, PASSWORD
+        ).getClientSslContext();
 
         var worker = new NioEventLoopGroup();
         try {
@@ -70,6 +80,7 @@ public class SimpleTextProtocolServerTest {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(
+                                    sslCtx.newHandler(ch.alloc()),
                                     new StringDecoder(),
                                     new StringEncoder(),
                                     new ClientHandler(responseProcessor)
